@@ -3,33 +3,40 @@ import { openCommentsDrawer } from "./drawer.js";
 export function createPostElement(post) {
   const article = document.createElement("article");
   article.className = "card";
+  article.dataset.id = post.id;
 
-  const titleContent = post.url
-    ? `<a href="${post.url}" target="_blank" class="post-title-link">${post.title || "Untitled"}</a>`
-    : post.title || "Untitled";
+  // badge
+  const badge = document.createElement("div");
+  badge.className = "badge";
+  badge.textContent = post.type;
+  article.appendChild(badge);
 
-  article.innerHTML = `
-    <div class="badge">${post.type}</div>
+  // title
+  if (post.title) {
+    const title = document.createElement("h2");
+    title.textContent = post.title;
+    article.appendChild(title);
+  }
 
-    <h2>${titleContent}</h2>
+  // meta (author + time)
+  const meta = document.createElement("div");
+  meta.className = "meta";
 
-    <div class="meta">
-      <span>${post.by || "unknown"}</span>
-      <span>${new Date(post.time * 1000).toLocaleString()}</span>
-    </div>
+  const author = document.createElement("span");
+  author.textContent = post.by || "unknown";
 
-    ${post.text ? `<div class="text">${post.text}</div>` : ""}
+  const time = document.createElement("span");
+  time.textContent = new Date(post.time * 1000).toLocaleString();
 
-    <button class="toggle-comments">
-      Comments (${post.descendants || 0})
-    </button>
-  `;
+  meta.append(author, time);
+  article.appendChild(meta);
 
-  const button = article.querySelector(".toggle-comments");
-
-  button.addEventListener("click", () => {
-    openCommentsDrawer(post);
-  });
+  // Show button
+  const button = document.createElement("button");
+  button.className = "show-post";
+  button.textContent = "Show";
+  button.addEventListener("click", () => openCommentsDrawer(post));
+  article.appendChild(button);
 
   return article;
 }

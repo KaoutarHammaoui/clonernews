@@ -1,10 +1,11 @@
+import {fetchItem} from "./client.js";
 const cache = new Map()
 const inFlight = new Map()
 
-export async function safeFetchItem(id, fetcher) {
+export async function safeFetchItem(id) {
   if (cache.has(id)) return cache.get(id)
   if (inFlight.has(id)) return inFlight.get(id)
-  const promise = fetcher(id)
+  const promise = await fetchItem(id)
     .then((data) => {
       cache.set(id, data)
       inFlight.delete(id)
@@ -16,4 +17,8 @@ export async function safeFetchItem(id, fetcher) {
 
   inFlight.set(id, promise)
   return promise
+}
+
+export function invalidateCache(id) {
+  cache.delete(id)
 }

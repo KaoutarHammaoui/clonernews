@@ -1,41 +1,73 @@
-import {
-    fetchFeed,
-  } from "../api/client.js";
-  
-  const banner =
-    document.getElementById(
-      "live-banner"
-    );
-  
-  export function startLiveUpdates(
-    existingIds
-  ) {
-    setInterval(async () => {
-      try {
-        const latestIds =
-          await fetchFeed();
-  
-        const newItems =
-          latestIds.filter(
-            id =>
-              !existingIds.includes(id)
-          );
-  
-        if (newItems.length > 0) {
-          banner.hidden = false;
-  
-          banner.textContent = `
-            ${newItems.length}
-            new posts available
-          `;
-  
-          banner.onclick = () => {
-            location.reload();
-          };
-        }
-  
-      } catch (error) {
-        console.error(error);
+import { fetchFeed, fetchItem } from "../api/client.js";
+import { invalidateCache } from "../api/cache.js";
+import { createPostElement } from "./post.js";
+const banner = document.getElementById("live-banner");
+const postsContainer = document.getElementById("feed");
+const POLL_INTERVAL = 5000; 
+
+export function startLiveUpdates(existingIds) {
+  setInterval(async () => {
+    try {
+      const [latestIds, updates] = await Promise.all([
+        fetchFeed(),
+        fetchFeed("updates"),
+      ]);
+
+      handleNewPosts(latestIds, existingIds);
+      handleItemUpdates(updates?.items || [], existingIds);
+    } catch (error) {
+      console.error(error);
+    }
+  }, POLL_INTERVAL);
+}
+
+function handleNewPosts(latestIds, existingIds) {
+  const newIds = latestIds.filter(id => !existingIds.includes(id));
+  if (newIds.length === 0) return;
+
+  banner.hidden = false;
+  banner.textContent = `${newIds.length} new posts available`;
+
+  const firstChild = postsContainer.firstChild;
+  banner.onclick = async () => {
+    banner.hidden = true;
+    const orderedIds = [...newIds].reverse();
+
+    for (const id of orderedIds) {
+      const post = await fetchItem(id);
+      const element = createPostElement(post);
+      firstChild.before(element);
+      existingIds.unshift(id);
+    }
+  };
+}
+
+async function handleItemUpdates(updateIds, existingIds) {
+  if (!updateIds.length) return;
+
+  const refreshed = await Promise.all(
+    updateIds.map(async (id) => {
+      if (!existingIds.includes(id)) return null;
+      
+      const existingCard = document.querySelector(`[data-id="${id}"]`);
+      if (!existingCard) return null;
+
+      invalidateCache(id);
+      const post = await fetchItem(id);
+      
+      if (post.deleted || post.dead) {
+        existingCard.remove();
+        return id;
       }
-    }, 5000);
+      
+      const updatedCard = createPostElement(post);
+      existingCard.replaceWith(updatedCard);
+      return id;
+    })
+  );
+
+  const count = refreshed.filter(Boolean).length;
+  if (count) {
+    console.debug(`Refreshed ${count} updated item${count === 1 ? "" : "s"}`);
   }
+}
