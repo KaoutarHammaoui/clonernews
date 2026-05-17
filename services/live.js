@@ -31,14 +31,21 @@ function handleNewPosts(latestIds, existingIds) {
   const firstChild = postsContainer.firstChild;
   banner.onclick = async () => {
     banner.hidden = true;
-    const orderedIds = [...newIds].reverse();
-
-    for (const id of orderedIds) {
-      const post = await fetchItem(id);
+    const posts = await Promise.all(
+      newIds.map(id => fetchItem(id))
+    );
+  
+    // newest -> oldest
+    posts.sort((a, b) => b.time - a.time);
+  
+    for (const post of posts) {
       const element = createPostElement(post);
-      firstChild.before(element);
-      existingIds.unshift(id);
+  
+      // add in order
+      postsContainer.prepend(element);
     }
+    
+    existingIds.unshift(...posts.map(p => p.id).reverse());
   };
 }
 
