@@ -2,19 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ClonerNews</title>
-
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
 
   <header class="header">
     <h1>ClonerNews</h1>
-
     <button id="live-banner" hidden>
       New posts available
     </button>
@@ -22,11 +17,20 @@
 
   <main>
     <section id="feed"></section>
-
-    <div id="loader">
-      Loading...
-    </div>
+    <div id="loader">Loading...</div>
   </main>
+
+  <!-- Comments drawer -->
+  <div id="drawer-overlay"></div>
+
+  <aside id="comments-drawer">
+    <div id="drawer-header">
+      <h2 id="drawer-title">Comments</h2>
+      <button id="drawer-close">✕</button>
+    </div>
+    <div id="drawer-body"></div>
+    <div id="drawer-footer"></div>
+  </aside>
 
   <script type="module" src="app.js"></script>
 </body>

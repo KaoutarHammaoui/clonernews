@@ -16,5 +16,7 @@ export async function getComments(ids = []) {
     }),
   );
 
-  return comments.filter(Boolean);
+    return comments
+    .filter(Boolean)
+    .sort((a, b) => b.time - a.time);
 }
