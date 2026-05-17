@@ -1,6 +1,7 @@
-import { fetchFeed, fetchItem } from "../api/client.js";
+import { fetchFeed } from "../api/client.js";
 import { invalidateCache } from "../api/cache.js";
 import { createPostElement } from "./post.js";
+import { getItem } from "./items.js";
 const banner = document.getElementById("live-banner");
 const postsContainer = document.getElementById("feed");
 const POLL_INTERVAL = 5000; 
@@ -31,20 +32,16 @@ function handleNewPosts(latestIds, existingIds) {
   const firstChild = postsContainer.firstChild;
   banner.onclick = async () => {
     banner.hidden = true;
-    const posts = await Promise.all(
-      newIds.map(id => fetchItem(id))
-    );
-  
-    // newest -> oldest
-    posts.sort((a, b) => a.time - b.time);
-  
+    const posts = (await Promise.all(newIds.map(id => getItem(id))))
+      .filter(Boolean);
+
+    posts.sort((a, b) => b.time - a.time);
+
     for (const post of posts) {
       const element = createPostElement(post);
-  
-      // add in order
-      postsContainer.prepend(element);
+      postsContainer.insertBefore(element, firstChild);
     }
-    
+
     existingIds.unshift(...posts.map(p => p.id).reverse());
   };
 }
@@ -60,7 +57,7 @@ async function handleItemUpdates(updateIds, existingIds) {
       if (!existingCard) return null;
 
       invalidateCache(id);
-      const post = await fetchItem(id);
+      const post = await getItem(id);
       
       if (post.deleted || post.dead) {
         existingCard.remove();
