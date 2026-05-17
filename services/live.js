@@ -36,7 +36,7 @@ function handleNewPosts(latestIds, existingIds) {
     );
   
     // newest -> oldest
-    posts.sort((a, b) => b.time - a.time);
+    posts.sort((a, b) => a.time - b.time);
   
     for (const post of posts) {
       const element = createPostElement(post);
